@@ -549,6 +549,75 @@ function dbRollbackTransaction() {
 
 }//end dbRollbackTransaction()
 
+$server_info = mysqli_get_server_info($database_link);
+
+$is_mariadb = (strpos($server_info, 'MariaDB') !== false) ? true : false;
+$is_mysql = !$is_mariadb;
+
+$server_version = mysqli_get_server_version($database_link);
+$multiple_advisory_locks = ( ($is_mariadb && $server_version >= 100002) || ($is_mysql && $server_version >= 50705) ) ? true : false;
+
+$advisory_lock_held = false;
+
+function dbAdvLockAcquire($name, $timeout) {
+    // if mysql < 5.7.5 or mariadb < 10.0.2, only 1 lock may be held at a time
+    // per connection and GET_LOCK releases any lock currently held, which is
+    // bad for business
+
+    global $multiple_advisory_locks;
+    global $advisory_lock_held;
+
+    if (!$name) {
+        print "WARNING: Lock failed due to empty/null lock name";
+        return NULL;
+    }
+
+    // use a name that is not likely to be used by another application on this
+    // database server
+    $lock_name = "librenms.lock.$name";
+
+    if (!$multiple_advisory_locks && $advisory_lock_held) {
+        print "WARNING: mysql version too old to acquire multiple advisory locks - $name (actually $lock_name): ".mysqli_error().'\n';
+        return null;
+    }
+
+
+    $result = dbFetchCell("SELECT GET_LOCK(?, ?);", array($lock_name, $timeout));
+
+    if ($result === '1') {
+        if (!$multiple_advisory_locks) {
+            $advisory_lock_held=$lock_name;
+        }
+        return true;
+    }
+    if ($result === '0') {
+        return false;
+    }
+
+    print "WARNING: unexpected error acquiring lock $name (actually $lock_name): ".mysqli_error().'\n';
+    return null;
+} //end dbAdvLockAcquire()
+
+
+function dbAdvLockRelease($name) {
+    global $multiple_advisory_locks;
+    global $advisory_lock_held;
+
+    $lock_name = "librenms.lock.$name";
+
+    $result = dbFetchCell("SELECT RELEASE_LOCK(?);", array($lock_name));
+
+    if ($result === '1') {
+        if (!$multiple_advisory_locks) {
+            $advisory_lock_held=false;
+        }
+        return true;
+    }
+
+    print "WARNING: unexpected error releasing lock $name (actually $lock_name): ".mysqli_error().'\n';
+    return null;
+} //end dbAdvLockRelease()
+
 
 /*
     class dbIterator implements Iterator {
