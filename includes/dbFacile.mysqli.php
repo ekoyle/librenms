@@ -549,14 +549,6 @@ function dbRollbackTransaction() {
 
 }//end dbRollbackTransaction()
 
-$server_info = mysqli_get_server_info($database_link);
-
-$is_mariadb = (strpos($server_info, 'MariaDB') !== false) ? true : false;
-$is_mysql = !$is_mariadb;
-
-$server_version = mysqli_get_server_version($database_link);
-$multiple_advisory_locks = ( ($is_mariadb && $server_version >= 100002) || ($is_mysql && $server_version >= 50705) ) ? true : false;
-
 $advisory_lock_held = false;
 
 function dbAdvLockAcquire($name, $timeout) {
@@ -564,8 +556,8 @@ function dbAdvLockAcquire($name, $timeout) {
     // per connection and GET_LOCK releases any lock currently held, which is
     // bad for business
 
-    global $multiple_advisory_locks;
-    global $advisory_lock_held;
+    global $config, $advisory_lock_held;
+    $multiple_advisory_locks = $config['db']['runtime']['multiple_advisory_locks'];
 
     if (!$name) {
         print "WARNING: Lock failed due to empty/null lock name";
@@ -577,7 +569,7 @@ function dbAdvLockAcquire($name, $timeout) {
     $lock_name = "librenms.lock.$name";
 
     if (!$multiple_advisory_locks && $advisory_lock_held) {
-        print "WARNING: mysql version too old to acquire multiple advisory locks - $name (actually $lock_name): ".mysqli_error().'\n';
+        print "WARNING: mysql version too old to acquire multiple advisory locks - $name (actually $lock_name): ".mysqli_error()."\n";
         return null;
     }
 
@@ -594,14 +586,14 @@ function dbAdvLockAcquire($name, $timeout) {
         return false;
     }
 
-    print "WARNING: unexpected error acquiring lock $name (actually $lock_name): ".mysqli_error().'\n';
+    print "WARNING: unexpected error acquiring lock $name (actually $lock_name): ".mysqli_error()."\n";
     return null;
 } //end dbAdvLockAcquire()
 
 
 function dbAdvLockRelease($name) {
-    global $multiple_advisory_locks;
-    global $advisory_lock_held;
+    global $config, $advisory_lock_held;
+    $multiple_advisory_locks = $config['db']['runtime']['multiple_advisory_locks'];
 
     $lock_name = "librenms.lock.$name";
 
@@ -614,7 +606,7 @@ function dbAdvLockRelease($name) {
         return true;
     }
 
-    print "WARNING: unexpected error releasing lock $name (actually $lock_name): ".mysqli_error().'\n';
+    print "WARNING: unexpected error releasing lock $name (actually $lock_name): ".mysqli_error()."\n";
     return null;
 } //end dbAdvLockRelease()
 

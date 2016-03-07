@@ -24,10 +24,22 @@ die;
 
 if ($config['db']['extension'] == 'mysqli') {
     $database_db = mysqli_select_db($database_link, $config['db_name']);
+    $server_info = mysqli_get_server_info($database_link);
+    $server_version = mysqli_get_server_version($database_link);
 }
 else {
     $database_db = mysql_select_db($config['db_name'], $database_link);
+    $server_info = mysql_get_server_info($database_link);
+    // FIXME: no mysql_get_server_version()
+    $server_version = 0;
 }
+
+$is_mariadb = (strpos($server_info, 'MariaDB') !== false) ? true : false;
+$is_mysql = !$is_mariadb;
+
+$multiple_advisory_locks = ( ($is_mariadb && $server_version >= 100002) || ($is_mysql && $server_version >= 50705) ) ? true : false;
+
+$config['db']['runtime'] = array('info' => $server_info, 'version' => $server_version);
 
 if ($config['memcached']['enable'] === true) {
     if (class_exists('Memcached')) {
