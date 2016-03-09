@@ -75,7 +75,7 @@ function showPercent($per, $label='') {
     $background       = get_percentage_colours($per);
     $right_background = $background['right'];
     $left_background  = $background['left'];
-    $res              = print_percentage_bar(200, 20, $per, null, 'ffffff', $left_background, "$per% $label", 'ffffff', $right_background);
+    $res              = print_percentage_bar(350, 20, $per, null, 'ffffff', $left_background, "$label $per%", 'ffffff', $right_background);
     return $res;
 
 }//end showPercent()
