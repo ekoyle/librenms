@@ -71,11 +71,11 @@ $ousage['per']   = (($ousage['per'] < 0) ? '0' : $ousage['per']);
 $ousage['bg']    = get_percentage_colours($ousage['per']);
 
 
-function showPercent($per) {
+function showPercent($per, $label='') {
     $background       = get_percentage_colours($per);
     $right_background = $background['right'];
     $left_background  = $background['left'];
-    $res              = print_percentage_bar(200, 20, $per, null, 'ffffff', $left_background, $per.'%', 'ffffff', $right_background);
+    $res              = print_percentage_bar(200, 20, $per, null, 'ffffff', $left_background, "$per% $label", 'ffffff', $right_background);
     return $res;
 
 }//end showPercent()
@@ -115,7 +115,7 @@ function showPercent($per) {
                     <td><?php echo $total['allow'] ?></td>
                     <td><?php echo $total['ave'] ?></td>
                     <td><?php echo $total['est'] ?></td>
-                    <td><?php echo showPercent($total['per']) ?></td>
+                    <td><?php echo showPercent($total['per'], 'Total/Quota') ?></td>
                 </tr>
                 <tr>
                     <th>Inbound</th>
@@ -123,7 +123,7 @@ function showPercent($per) {
                     <td><?php echo $in['allow'] ?></td>
                     <td><?php echo $in['ave'] ?></td>
                     <td><?php echo $in['est'] ?></td>
-                    <td><?php echo showPercent($in['per']) ?></td>
+                    <td><?php echo showPercent($in['per', 'Inbound/Total']) ?></td>
                 </tr>
                 <tr>
                     <th>Outbound</th>
@@ -131,7 +131,7 @@ function showPercent($per) {
                     <td><?php echo $out['allow'] ?></td>
                     <td><?php echo $out['ave'] ?></td>
                     <td><?php echo $out['est'] ?></td>
-                    <td><?php echo showPercent($out['per']) ?></td>
+                    <td><?php echo showPercent($out['per', 'Outbound/Total']) ?></td>
                 </tr>
         <?php if ($ousage['over'] > 0 && $bill_data['bill_type'] == 'quota') { ?>
                 <tr>
@@ -140,7 +140,7 @@ function showPercent($per) {
                     <td><?php echo $ousage['allow'] ?></td>
                     <td><?php echo $ousage['ave'] ?></td>
                     <td><?php echo $ousage['est'] ?></td>
-                    <td><?php echo showPercent($ousage['per']) ?></td>
+                    <td><?php echo showPercent($ousage['per'], '(Total-Quota)/Quota') ?></td>
                 </tr>
                 
         <?php } ?>        
